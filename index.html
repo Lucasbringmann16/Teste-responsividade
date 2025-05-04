@@ -1,238 +1,42 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
-<html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Testador de Responsividade de Sites</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f0f2f5;
-      color: #333;
-    }
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-    h1 {
-      text-align: center;
-      font-size: 2.2em;
-      margin-bottom: 20px;
-    }
-    .input-section {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 30px;
-      background-color: #fff;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .input-section input {
-      padding: 12px;
-      font-size: 1em;
-      width: 100%;
-      max-width: 500px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-    }
-    .input-section button {
-      padding: 12px 24px;
-      font-size: 1em;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    .input-section button:hover {
-      background-color: #218838;
-    }
-    .clear-btn {
-      background-color: #dc3545;
-    }
-    .clear-btn:hover {
-      background-color: #c82333;
-    }
-    .error {
-      color: #dc3545;
-      text-align: center;
-      margin-top: 10px;
-      display: none;
-    }
-    .screen-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-      gap: 20px;
-    }
-    .screen {
-      background-color: #fff;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      text-align: center;
-    }
-    .screen h3 {
-      margin: 0 0 10px;
-      font-size: 1.2em;
-      color: #007bff;
-    }
-    .screen iframe {
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-    }
-    @media (max-width: 600px) {
-      .input-section {
-        flex-direction: column;
-        align-items: center;
-      }
-      .input-section input, .input-section button {
-        width: 100%;
-        max-width: none;
-      }
-      .screen-container {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Responsividade</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Testador de Responsividade de Sites</h1>
-    <div class="input-section">
-      <input type="text" id="siteUrl" placeholder="Digite a URL do site (ex: https://exemplo.com)">
-      <button onclick="loadSite()">Testar</button>
-      <button class="clear-btn" onclick="clearSite()">Limpar</button>
-    </div>
-    <div class="error" id="errorMsg">Por favor, insira uma URL válida começando com http:// ou https://</div>
-    <div class="screen-container">
-      <div class="screen">
-        <h3>Smartphone Pequeno (320x568)</h3>
-        <iframe id="mobile-small" width="320" height="568"></iframe>
-      </div>
-      <div class="screen">
-        <h3>Smartphone Médio (375x667)</h3>
-        <iframe id="mobile-medium" width="375" height="667"></iframe>
-      </div>
-      <div class="screen">
-        <h3>Smartphone Grande (414x896)</h3>
-        <iframe id="mobile-large" width="414" height="896"></iframe>
-      </div>
-      <div class="screen">
-        <h3>Tablet Pequeno (768x1024)</h3>
-        <iframe id="tablet-small" width="768" height="1024"></iframe>
-      </div>
-      <div class="screen">
-        <h3>Tablet Grande (1024x1366)</h3>
-        <iframe id="tablet-large" width="1024" height="1366"></iframe>
-      </div>
-      <div class="screen">
-        <h3>Desktop Pequeno (1280x720)</h3>
-        <iframe id="desktop-small" width="1280" height="720"></iframe>
-      </div>
-      <div class="screen">
-        <h3>Desktop Grande (1920x1080)</h3>
-        <iframe id="desktop-large" width="1920" height="1080"></iframe>
-      </div>
-    </div>
-  </div>
-  <script>
-    function loadSite() {
-      const url = document.getElementById('siteUrl').value.trim();
-      const errorMsg = document.getElementById('errorMsg');
-      
-      if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) {
-        errorMsg.style.display = 'block';
-        return;
-      }
-      
-      errorMsg.style.display = 'none';
-      const iframes = [
-        'mobile-small', 'mobile-medium', 'mobile-large',
-        'tablet-small', 'tablet-large',
-        'desktop-small', 'desktop-large'
-      ];
-      
-      iframes.forEach(id => {
-        const iframe = document.getElementById(id);
-        iframe.src = url;
-      });
-    }
 
-    function clearSite() {
-      const urlInput = document.getElementById('siteUrl');
-      const errorMsg = document.getElementById('errorMsg');
-      urlInput.value = '';
-      errorMsg.style.display = 'none';
-      
-      const iframes = [
-        'mobile-small', 'mobile-medium', 'mobile-large',
-        'tablet-small', 'tablet-large',
-        'desktop-small', 'desktop-large'
-      ];
-      
-      iframes.forEach(id => {
-        const iframe = document.getElementById(id);
-        iframe.src = 'about:blank';
-      });
-    }
+    <header>
+        <h1>Teste de Responsividade</h1>
+        <p>Redimensione a janela do navegador ou use as ferramentas de desenvolvedor para ver a mágica acontecer!</p>
+    </header>
 
-    // Carregar site ao pressionar Enter
-    document.getElementById('siteUrl').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        loadSite();
-      }
-    });
-  </script>
+    <main>
+        <section class="conteudo">
+            <h2>Conteúdo Principal</h2>
+            <p>Este parágrafo contém algum texto para preencher espaço. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam.</p>
+            <img src="https://via.placeholder.com/600x200.png?text=Imagem+Exemplo" alt="Imagem de exemplo" class="imagem-responsiva">
+            <p>Outro parágrafo para adicionar mais conteúdo e verificar o fluxo do texto em diferentes larguras.</p>
+        </section>
+
+        <section class="grid-container">
+            <h2>Grade Simples</h2>
+            <div class="grid-item">Item 1</div>
+            <div class="grid-item">Item 2</div>
+            <div class="grid-item">Item 3</div>
+            <div class="grid-item">Item 4</div>
+        </section>
+
+        <section class="info-tela">
+            <p>Use as Ferramentas de Desenvolvedor do seu navegador (geralmente F12) para simular diferentes dispositivos (celulares e tablets).</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>Rodapé Simples</p>
+    </footer>
+
 </body>
 </html>
